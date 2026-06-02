@@ -356,17 +356,17 @@
 
         <main id="screen-home" class="app-screen active">
             <!-- CARTEL DE NOTIFICACIONES -->
-            <div id="cartel-notificaciones" onclick="activarNotificacionesManual()" style="display: none; background: linear-gradient(90deg, var(--rl-orange), var(--danger)); padding: 15px 20px; border-radius: 16px; margin-bottom: 20px; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 85, 0, 0.3);">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="background: rgba(0,0,0,0.3); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-bell" style="font-size: 1.2rem; color: white;"></i>
+            <div id="cartel-notificaciones" class="cartel-notificaciones" onclick="activarNotificacionesManual()" style="display: none; background: linear-gradient(90deg, var(--rl-orange), var(--danger)); padding: 15px 20px; border-radius: 16px; margin-bottom: 20px; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 85, 0, 0.3);">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="background: rgba(0,0,0,0.3); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-bell" style="font-size: 1.2rem; color: white;"></i>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 0.95rem; margin-bottom: 3px; color: white;">Activar Alertas</h4>
+                        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.9); font-weight: 600;">Recibe DMs y avisos de grupos</p>
+                    </div>
                 </div>
-                <div>
-                    <h4 style="font-size: 0.95rem; margin-bottom: 3px; color: white;">Activar Alertas</h4>
-                    <p style="font-size: 0.75rem; color: rgba(255,255,255,0.9); font-weight: 600;">Recibe DMs y avisos de grupos</p>
-                </div>
-            </div>
-            <button class="btn-primary" style="margin: 0; width: auto; padding: 6px 12px; background: rgba(0,0,0,0.4); border: none; border-radius: 8px; color: white; font-weight: 800; font-size: 0.7rem; text-transform: uppercase;">Activar</button>
+                <button class="boton-primario" style="margin: 0; width: auto; padding: 6px 12px; background: rgba(0,0,0,0.4); border: none; border-radius: 8px; color: white; font-weight: 800; font-size: 0.7rem; text-transform: uppercase;">Activar</button>
             </div>
             <div class="id-card">
                 <div class="id-card-content">
@@ -1182,18 +1182,14 @@
             document.getElementById('menu-epic').innerText = currentUser.epic;
             document.getElementById('menu-email').innerText = currentUser.email;
             document.getElementById('view-pass').value = currentUser.pass;
-
+            
             updateAvatarsUI();
             updateHomeStats();
             renderRankDB();
             renderGroups();
             renderMmrHistory();
             renderGarage();
-            
-            // EL TRUCO ESTÁ AQUÍ: Solo arranca en silencio si YA diste permiso antes.
-            if ('Notification' in window && Notification.permission === 'granted') {
-                requestPushPermission();
-            }
+            requestPushPermission();
         }
 
         // SOLUCIÓN 2 APLICADA AQUÍ: Se ha cambiado a `switchGroupTab('groups')` para que no se quede la pantalla en blanco
@@ -2293,21 +2289,24 @@
 
         // Lógica para mostrar u ocultar el cartel de notificaciones
         function comprobarCartelNotificaciones() {
-        const cartel = document.getElementById('cartel-notificaciones');
+            const cartel = document.getElementById('cartel-notificaciones');
             if (!cartel) return;
             
+            // Verificamos si el navegador soporta notificaciones y si el permiso sigue en "default" (sin contestar)
             if ('Notification' in window && Notification.permission === 'default') {
-                cartel.style.display = 'flex'; // Te lo muestra si no has dicho ni sí ni no
+                cartel.style.display = 'flex';
             } else {
-                cartel.style.display = 'none'; // Lo esconde si ya aceptaste o bloqueaste
+                // Si ya nos dio permiso o nos bloqueó, lo escondemos
+                cartel.style.display = 'none';
             }
         }
 
-    function activarNotificacionesManual() {
-        if(typeof triggerHaptic === 'function') triggerHaptic('medium');
-        requestPushPermission(); 
-        document.getElementById('cartel-notificaciones').style.display = 'none'; 
-    }
+        // Función que se ejecuta al tocar el cartel
+        function activarNotificacionesManual() {
+            if(typeof triggerHaptic === 'function') triggerHaptic('medium'); // Vibra un poco si puede
+            requestPushPermission(); // Lanza el aviso del móvil
+            document.getElementById('cartel-notificaciones').style.display = 'none'; // Esconde el cartel al instante
+        }
     </script>
 </body>
 </html>
