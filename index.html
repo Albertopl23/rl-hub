@@ -948,6 +948,7 @@
                 return;
             }
             
+            // Dibuja las solicitudes de amistad
             reqs.forEach(reqEpic => {
                 const avatarCode = getUserAvatar(reqEpic);
                 list.innerHTML += `
@@ -967,15 +968,37 @@
                 `;
             });
 
+            // Dibuja las alertas (Amigos aceptados, DMs y Grupos)
             alerts.forEach(alertObj => {
                 const avatarCode = getUserAvatar(alertObj.from);
+                
+                // Valores por defecto (Amigo aceptado)
+                let titleText = alertObj.from;
+                let subText = "¡Aceptó tu solicitud!";
+                let bgColor = "rgba(16, 185, 129, 0.1)";
+                let borderColor = "var(--success)";
+                
+                // Cambia el diseño si es un Mensaje Privado
+                if (alertObj.type === 'dm_msg') {
+                    subText = "Te ha enviado un mensaje";
+                    bgColor = "rgba(0, 119, 255, 0.1)";
+                    borderColor = "var(--rl-blue)";
+                } 
+                // Cambia el diseño si es un Mensaje de Grupo
+                else if (alertObj.type === 'group_msg') {
+                    titleText = alertObj.from; 
+                    subText = `${alertObj.sender} escribió en el grupo`;
+                    bgColor = "rgba(255, 85, 0, 0.1)";
+                    borderColor = "var(--rl-orange)";
+                }
+
                 list.innerHTML += `
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; background:rgba(16, 185, 129, 0.1); padding:10px; border-radius:12px; border-left: 3px solid var(--success);">
-                        <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openProfile('${alertObj.from}'); toggleNotifications();">
-                            <div style="width:35px; height:35px; border-radius:50%; background:var(--success); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">${avatarCode}</div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; background:${bgColor}; padding:10px; border-radius:12px; border-left: 3px solid ${borderColor};">
+                        <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="toggleNotifications(); navTo('groups', document.querySelectorAll('.nav-item')[4]);">
+                            <div style="width:35px; height:35px; border-radius:50%; background:${borderColor}; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">${avatarCode}</div>
                             <div>
-                                <h5 style="font-size:0.85rem; margin-bottom:2px; color:white;">${alertObj.from}</h5>
-                                <p style="font-size:0.65rem; color:var(--success); font-weight:700;">¡Aceptó tu solicitud!</p>
+                                <h5 style="font-size:0.85rem; margin-bottom:2px; color:white;">${titleText}</h5>
+                                <p style="font-size:0.65rem; color:${borderColor}; font-weight:700;">${subText}</p>
                             </div>
                         </div>
                         <div style="flex-shrink:0;">
@@ -1013,6 +1036,20 @@
             myAlerts = myAlerts.filter(a => a.id !== alertId);
             db.ref('users').child(currentUser.id).update({ alerts: myAlerts });
             if(document.getElementById('notif-panel').style.display === 'block') renderNotifications();
+        }
+
+        // Función para borrar automáticamente las notificaciones al leer un chat
+        function clearChatAlerts(chatName, type) {
+            if (!currentUser || !currentUser.alerts) return;
+            
+            const originalLength = currentUser.alerts.length;
+            // Filtramos y nos quedamos solo con las alertas que NO sean del chat que acabas de abrir
+            const remainingAlerts = currentUser.alerts.filter(a => !(a.type === type && a.from === chatName));
+            
+            // Si había alertas de este chat y las hemos borrado, actualizamos Firebase
+            if (originalLength !== remainingAlerts.length) {
+                db.ref('users').child(currentUser.id).update({ alerts: remainingAlerts });
+            }
         }
 
         function declineRequest(reqEpic) {
@@ -1698,7 +1735,6 @@
         }
 
         function openDM(friendEpic) {
-            // VERIFICACIÓN DE SEGURIDAD: Comprobar si realmente sois amigos
             const myFriends = currentUser.friends || [];
             if (!myFriends.includes(friendEpic)) {
                 alert("Solo puedes enviar mensajes privados a tus amigos. ¡Agrégalo primero!");
@@ -1708,6 +1744,9 @@
 
             currentChatType = 'dm'; 
             currentChatId = getDMId(currentUser.epic, friendEpic);
+            
+            // --- NUEVO: Limpiamos la alerta de la campanita al abrir el mensaje ---
+            clearChatAlerts(friendEpic, 'dm_msg');
             
             document.getElementById('chat-title').innerText = friendEpic;
             document.getElementById('chat-members').innerText = 'Chat Privado Encriptado';
@@ -1913,7 +1952,12 @@
         }
 
         function openChatUI(group) {
-            currentChatType = 'group'; currentChatId = group.id;
+            currentChatType = 'group'; 
+            currentChatId = group.id;
+            
+            // --- NUEVO: Limpiamos la alerta de la campanita al abrir el grupo ---
+            clearChatAlerts(group.name, 'group_msg');
+            
             document.getElementById('chat-title').innerText = group.name;
             document.getElementById('chat-members').innerText = `${group.members ? group.members.length : 0} miembros`;
             document.getElementById('group-list-view').style.display = 'none';
@@ -1994,47 +2038,61 @@
             if(!txt) return;
             
             if(currentChatType === 'group') {
-                // 1. Guardar el mensaje en la base de datos del grupo
+                // 1. Guardar mensaje
                 db.ref(`groups/${currentChatId}/messages`).push({ u: currentUser.epic, m: txt });
                 
-                // 2. Avisar a todos los miembros del grupo (menos a ti mismo)
+                // 2. Enviar Push al móvil y Alerta a la campanita
                 const group = groupsDB.find(g => g.id === currentChatId);
                 if (group && group.members) {
                     group.members.forEach(memberEpic => {
-                        if (memberEpic !== currentUser.epic) {
+                        if (memberEpic !== currentUser.epic) { // No te avisa a ti mismo
                             const memberProfile = usersDB.find(u => u.epic === memberEpic);
-                            if (memberProfile && memberProfile.fcmToken) {
-                                fetch('/.netlify/functions/sendPush', {
-                                    method: 'POST',
-                                    body: JSON.stringify({
-                                        token: memberProfile.fcmToken,
-                                        title: `👥 ${group.name}`,
-                                        body: `${currentUser.epic}: ${txt}`
-                                    })
-                                });
+                            if (memberProfile) {
+                                // A. Envío al móvil (Arreglado con headers)
+                                if (memberProfile.fcmToken) {
+                                    fetch('/.netlify/functions/sendPush', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            token: memberProfile.fcmToken,
+                                            title: `👥 ${group.name}`,
+                                            body: `${currentUser.epic}: ${txt}`
+                                        })
+                                    });
+                                }
+                                // B. Encender Campanita In-App
+                                let theirAlerts = memberProfile.alerts || [];
+                                theirAlerts.push({ id: Date.now(), from: group.name, sender: currentUser.epic, type: 'group_msg' });
+                                db.ref('users').child(memberProfile.id).update({ alerts: theirAlerts });
                             }
                         }
                     });
                 }
-                
             } else if (currentChatType === 'dm') {
-                // 1. Guardar el mensaje en la base de datos privada
+                // 1. Guardar mensaje
                 db.ref(`dms/${currentChatId}/messages`).push({ u: currentUser.epic, m: txt });
                 
-                // 2. Avisar a la otra persona
-                // Sacamos el nombre del otro usuario dividiendo el ID del chat
+                // 2. Enviar Push al móvil y Alerta a la campanita
                 const otherUserEpic = currentChatId.split('_').find(e => e !== currentUser.epic);
                 const otherUserProfile = usersDB.find(u => u.epic === otherUserEpic);
                 
-                if (otherUserProfile && otherUserProfile.fcmToken) {
-                    fetch('/.netlify/functions/sendPush', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            token: otherUserProfile.fcmToken,
-                            title: `💬 Nuevo mensaje privado`,
-                            body: `${currentUser.epic}: ${txt}`
-                        })
-                    });
+                if (otherUserProfile) {
+                    // A. Envío al móvil
+                    if (otherUserProfile.fcmToken) {
+                        fetch('/.netlify/functions/sendPush', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                token: otherUserProfile.fcmToken,
+                                title: `💬 Mensaje de ${currentUser.epic}`,
+                                body: txt
+                            })
+                        });
+                    }
+                    // B. Encender Campanita In-App
+                    let theirAlerts = otherUserProfile.alerts || [];
+                    theirAlerts.push({ id: Date.now(), from: currentUser.epic, type: 'dm_msg' });
+                    db.ref('users').child(otherUserProfile.id).update({ alerts: theirAlerts });
                 }
             }
             
