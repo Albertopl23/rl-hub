@@ -355,9 +355,22 @@
         </nav>
 
         <main id="screen-home" class="app-screen active">
+            <!-- CARTEL DE NOTIFICACIONES -->
+            <div id="cartel-notificaciones" class="cartel-notificaciones" onclick="activarNotificacionesManual()" style="display: none; background: linear-gradient(90deg, var(--rl-orange), var(--danger)); padding: 15px 20px; border-radius: 16px; margin-bottom: 20px; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 85, 0, 0.3);">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="background: rgba(0,0,0,0.3); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-bell" style="font-size: 1.2rem; color: white;"></i>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 0.95rem; margin-bottom: 3px; color: white;">Activar Alertas</h4>
+                        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.9); font-weight: 600;">Recibe DMs y avisos de grupos</p>
+                    </div>
+                </div>
+                <button class="boton-primario" style="margin: 0; width: auto; padding: 6px 12px; background: rgba(0,0,0,0.4); border: none; border-radius: 8px; color: white; font-weight: 800; font-size: 0.7rem; text-transform: uppercase;">Activar</button>
+            </div>
             <div class="id-card">
                 <div class="id-card-content">
-                    <p style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 2px; margin-bottom: 5px;">Licencia Season 22</p>
+                    <p style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 2px; margin-bottom: 5px;">Season 22</p>
                     <h2 id="home-name-id" style="font-size: 1.8rem; font-weight: 900; text-transform: uppercase; margin-bottom: 2px;">LOKO</h2>
                     <p id="home-rank-name" style="font-size: 0.9rem; color: var(--rl-blue); font-weight: 700;">Sin Rango</p>
                 </div>
@@ -1176,7 +1189,6 @@
             renderGroups();
             renderMmrHistory();
             renderGarage();
-            requestPushPermission();
         }
 
         // SOLUCIÓN 2 APLICADA AQUÍ: Se ha cambiado a `switchGroupTab('groups')` para que no se quede la pantalla en blanco
@@ -1249,12 +1261,16 @@
             let topRank = { name: "Bronce I", div: "División I", color: "#824e2d" };
             
             if(myHistory.length > 0) {
-                const highestMmr = Math.max(...myHistory.map(m => m.v));
-                topRank = getRankInfo(highestMmr, '2v2'); 
+                // EL FIX: Cogemos siempre el ÚLTIMO MMR introducido (posición 0), ignorando tu "récord histórico"
+                const latestMmr = myHistory[0].v; 
+                const latestMode = myHistory[0].m || '2v2';
+                topRank = getRankInfo(latestMmr, latestMode); 
                 
-                document.getElementById('home-rank-name').innerText = `${topRank.name}`;
+                // Actualizamos la tarjeta superior con Nombre y División
+                document.getElementById('home-rank-name').innerText = `${topRank.name} ${topRank.div}`;
                 document.getElementById('home-rank-name').style.color = topRank.color;
                 
+                // Actualizamos el logo de la izquierda
                 const iconEl = document.getElementById('home-rank-icon');
                 iconEl.innerText = topRank.name === "Supersonic Legend" ? "S" : topRank.name[0];
                 iconEl.style.color = "#000";
@@ -1263,15 +1279,21 @@
                 iconEl.style.boxShadow = `0 0 20px ${topRank.color}60`;
             }
 
+            // PORCENTAJES Y ESTADÍSTICAS DINÁMICAS PARA CADA RANGO
             let fennecRate = 45; let octaneRate = 40; let goals = 3; let winrate = 62;
-            const isHighElo = topRank.name.includes("Supersonic") || topRank.name.includes("Grand Champion") || topRank.name.includes("Champion");
             
-            if(isHighElo) {
-                fennecRate = 68; octaneRate = 26; goals = 1; winrate = 78; 
-            }
+            if (topRank.name.includes("Supersonic")) { fennecRate = 72; octaneRate = 22; goals = 1; winrate = 82; }
+            else if (topRank.name.includes("Grand Champion")) { fennecRate = 65; octaneRate = 28; goals = 1; winrate = 75; }
+            else if (topRank.name.includes("Champion")) { fennecRate = 58; octaneRate = 34; goals = 2; winrate = 68; }
+            else if (topRank.name.includes("Diamond")) { fennecRate = 50; octaneRate = 40; goals = 2; winrate = 60; }
+            else if (topRank.name.includes("Platinum")) { fennecRate = 42; octaneRate = 48; goals = 3; winrate = 55; }
+            else if (topRank.name.includes("Gold")) { fennecRate = 35; octaneRate = 55; goals = 4; winrate = 50; }
+            else { fennecRate = 30; octaneRate = 60; goals = 4; winrate = 45; } // Plata y Bronce
 
-            document.getElementById('meta-rank-context').innerText = topRank.name === 'Bronce I' ? 'Global' : topRank.name;
+            // Actualizamos el texto "Meta en..."
+            document.getElementById('meta-rank-context').innerText = topRank.name;
 
+            // Lanzamos las animaciones de carga
             setTimeout(() => {
                 document.getElementById('bar-fennec').style.width = fennecRate + '%';
                 document.getElementById('bar-octane').style.width = octaneRate + '%';
@@ -1281,7 +1303,10 @@
                 animateValue('val-goals', 0, goals, 1500, '');
                 animateValue('val-winrate', 0, winrate, 1500, '');
             }, 150); 
+            
             renderLeaderboard();
+            updateMmrChart(myHistory);
+            comprobarCartelNotificaciones();
         }
 
         function animateValue(id, start, end, duration, suffix) {
@@ -2259,6 +2284,27 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js');
             });
+        }
+
+        // Lógica para mostrar u ocultar el cartel de notificaciones
+        function comprobarCartelNotificaciones() {
+            const cartel = document.getElementById('cartel-notificaciones');
+            if (!cartel) return;
+            
+            // Verificamos si el navegador soporta notificaciones y si el permiso sigue en "default" (sin contestar)
+            if ('Notification' in window && Notification.permission === 'default') {
+                cartel.style.display = 'flex';
+            } else {
+                // Si ya nos dio permiso o nos bloqueó, lo escondemos
+                cartel.style.display = 'none';
+            }
+        }
+
+        // Función que se ejecuta al tocar el cartel
+        function activarNotificacionesManual() {
+            if(typeof triggerHaptic === 'function') triggerHaptic('medium'); // Vibra un poco si puede
+            requestPushPermission(); // Lanza el aviso del móvil
+            document.getElementById('cartel-notificaciones').style.display = 'none'; // Esconde el cartel al instante
         }
     </script>
 </body>
