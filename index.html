@@ -1994,10 +1994,50 @@
             if(!txt) return;
             
             if(currentChatType === 'group') {
+                // 1. Guardar el mensaje en la base de datos del grupo
                 db.ref(`groups/${currentChatId}/messages`).push({ u: currentUser.epic, m: txt });
+                
+                // 2. Avisar a todos los miembros del grupo (menos a ti mismo)
+                const group = groupsDB.find(g => g.id === currentChatId);
+                if (group && group.members) {
+                    group.members.forEach(memberEpic => {
+                        if (memberEpic !== currentUser.epic) {
+                            const memberProfile = usersDB.find(u => u.epic === memberEpic);
+                            if (memberProfile && memberProfile.fcmToken) {
+                                fetch('/.netlify/functions/sendPush', {
+                                    method: 'POST',
+                                    body: JSON.stringify({
+                                        token: memberProfile.fcmToken,
+                                        title: `👥 ${group.name}`,
+                                        body: `${currentUser.epic}: ${txt}`
+                                    })
+                                });
+                            }
+                        }
+                    });
+                }
+                
             } else if (currentChatType === 'dm') {
+                // 1. Guardar el mensaje en la base de datos privada
                 db.ref(`dms/${currentChatId}/messages`).push({ u: currentUser.epic, m: txt });
+                
+                // 2. Avisar a la otra persona
+                // Sacamos el nombre del otro usuario dividiendo el ID del chat
+                const otherUserEpic = currentChatId.split('_').find(e => e !== currentUser.epic);
+                const otherUserProfile = usersDB.find(u => u.epic === otherUserEpic);
+                
+                if (otherUserProfile && otherUserProfile.fcmToken) {
+                    fetch('/.netlify/functions/sendPush', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            token: otherUserProfile.fcmToken,
+                            title: `💬 Nuevo mensaje privado`,
+                            body: `${currentUser.epic}: ${txt}`
+                        })
+                    });
+                }
             }
+            
             input.value = "";
         }
 
