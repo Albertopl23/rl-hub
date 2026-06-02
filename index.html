@@ -242,6 +242,13 @@
 
     <div class="background-fx"></div>
 
+    <!-- INDICADOR PULL TO REFRESH -->
+    <div id="pull-refresh-indicator" style="position: fixed; top: 0; left: 0; width: 100%; height: 70px; display: flex; align-items: center; justify-content: center; z-index: 9999; transform: translateY(-100%); transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none;">
+        <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
+            <i class="fas fa-sync-alt" id="pull-spinner" style="color: var(--rl-blue); font-size: 1.2rem; transition: transform 0.1s;"></i>
+        </div>
+    </div>
+
     <div id="auth-wrapper">
         <main id="auth-login" class="auth-screen active">
             <div class="glass-panel panel-center">
@@ -1035,6 +1042,7 @@
 
                 db.ref('users').child(reqUser.id).update({ friends: theirFriends, alerts: theirAlerts });
             }
+            triggerHaptic('heavy');
             if(document.getElementById('notif-panel').style.display === 'block') renderNotifications();
             if(document.getElementById('screen-profile').classList.contains('active')) openProfile(viewingProfileEpic);
         }
@@ -1386,6 +1394,12 @@
                 likesArray.push(currentUser.epic);
             }
             db.ref(`presets/${id}/likes`).set(likesArray);
+
+            function toggleLikePreset(id) {
+            // ... código ...
+            db.ref(`presets/${id}/likes`).set(likesArray);
+            triggerHaptic('medium'); // <--- ¡AÑADE ESTO!
+}
         }
 
         function renderGarage() {
@@ -2148,7 +2162,7 @@
                     }
                 });
             }
-            
+            triggerHaptic('light');
             input.value = "";
         }
 
@@ -2164,6 +2178,82 @@
         }
         function movePin(c, nId) { c.value = c.value.replace(/[^0-9]/g, ''); if(c.value.length === 1 && nId) document.getElementById(nId).focus(); }
         function checkPin() { if(document.getElementById('pin4').value !== "") verifyCode(); }
+
+        // =====================================
+        // DETALLES DE APP NATIVA (HÁPTICA Y PULL)
+        // =====================================
+
+        // 1. Motor Háptico Universal
+        function triggerHaptic(intensity = 'light') {
+            if (!("vibrate" in navigator)) return; // Si el móvil no soporta vibración web, no hace nada
+            
+            if (intensity === 'light') navigator.vibrate(20);      // Toque suave (clicks normales)
+            else if (intensity === 'medium') navigator.vibrate(50);    // Toque medio (acciones importantes)
+            else if (intensity === 'heavy') navigator.vibrate([30, 50, 30]); // Doble toque (errores o éxito)
+        }
+
+        // Añadimos vibración automática a todos los botones y pestañas inferiores
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-primary') || e.target.closest('.nav-item') || e.target.closest('.tab')) {
+                triggerHaptic('light');
+            }
+        });
+
+        // 2. Motor Pull to Refresh
+        let touchStartY = 0;
+        let pullDistance = 0;
+        const PULL_THRESHOLD = 90; // Distancia en píxeles que hay que arrastrar para recargar
+        const indicator = document.getElementById('pull-refresh-indicator');
+        const spinner = document.getElementById('pull-spinner');
+
+        document.addEventListener('touchstart', e => {
+            // Solo empezamos a contar si estamos arriba del todo en la pantalla
+            if (window.scrollY === 0) touchStartY = e.touches[0].clientY;
+            else touchStartY = 0;
+        }, { passive: true });
+
+        document.addEventListener('touchmove', e => {
+            if (touchStartY === 0) return;
+            const currentY = e.touches[0].clientY;
+            pullDistance = currentY - touchStartY;
+
+            // Si tiramos hacia abajo y estamos arriba del todo
+            if (pullDistance > 0 && window.scrollY === 0) {
+                const move = Math.min(pullDistance, PULL_THRESHOLD + 40);
+                indicator.style.transform = `translateY(${move - 70}px)`; // Bajamos el icono
+                spinner.style.transform = `rotate(${move * 2}deg)`; // Giramos el icono según arrastras
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', e => {
+            if (pullDistance > PULL_THRESHOLD && window.scrollY === 0) {
+                // Hemos tirado lo suficiente: ¡Recargamos!
+                indicator.style.transform = `translateY(20px)`;
+                spinner.classList.add('fa-spin'); // Empieza a dar vueltas solo
+                triggerHaptic('medium'); // Vibra el móvil para confirmar
+
+                // Actualizamos los datos en segundo plano sin pantallazo blanco
+                if (currentUser) {
+                    updateHomeStats();
+                    renderGroups();
+                    if(document.getElementById('screen-groups').classList.contains('active') && currentGroupTab === 'radar') renderRadar();
+                    if(document.getElementById('screen-garage').classList.contains('active')) renderGarage();
+                    if(document.getElementById('screen-tracker').classList.contains('active')) renderMmrHistory();
+                }
+
+                // Ocultamos el icono de carga después de 1 segundo
+                setTimeout(() => {
+                    indicator.style.transform = `translateY(-100%)`;
+                    setTimeout(() => spinner.classList.remove('fa-spin'), 200); // Quita el giro cuando ya no se ve
+                }, 1000);
+            } else {
+                // No hemos tirado lo suficiente, se esconde sin hacer nada
+                indicator.style.transform = `translateY(-100%)`;
+            }
+            
+            touchStartY = 0;
+            pullDistance = 0;
+        });
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
