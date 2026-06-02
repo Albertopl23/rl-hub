@@ -13,13 +13,8 @@ const messaging = firebase.messaging();
 
 // Esto es lo que pinta la notificación cuando la app está cerrada
 messaging.onBackgroundMessage((payload) => {
-    const notificationTitle = payload.notification.title;
-    const notificationOptions = {
-        body: payload.notification.body,
-        icon: './img/logo.png',
-        badge: './img/logo.png'
-    };
-    self.registration.showNotification(notificationTitle, notificationOptions);
+    console.log('Mensaje recibido en segundo plano:', payload);
+    // Ya no llamamos a showNotification porque Firebase lo hace automáticamente
 });
 
 const CACHE_NAME = 'rl-hub-v1';
