@@ -369,8 +369,7 @@
                     </select>
                 </div>
                 <div id="leaderboard-container">
-                    <!-- Los jugadores se cargan aquí por JS -->
-                </div>
+                    </div>
             </div>
 
             <div class="meta-dashboard">
@@ -418,7 +417,7 @@
                         <option value="3v3">Estándar 3v3</option>
                         <option value="1v1">Duelo 1v1</option>
                     </select>
-                    <input type="number" id="mmr-val" placeholder="MMR" style="flex: 1; padding: 12px;">
+                    <input type="number" id="mmr-val" placeholder="MMR" max="2700" min="0" style="flex: 1; padding: 12px;">
                     <button class="btn-primary" style="margin:0; width: 60px; border-radius: 12px;" onclick="addMmr()"><i class="fas fa-plus"></i></button>
                 </div>
             </div>
@@ -475,8 +474,6 @@
             </div>
         </main>
 
-        <!-- SECCIÓN SOCIAL: GRUPOS, RADAR Y AMIGOS -->
-        <!-- SECCIÓN SOCIAL: GRUPOS, RADAR Y AMIGOS -->
         <main id="screen-groups" class="app-screen">
             <div id="group-list-view">
                 <div class="tabs">
@@ -485,7 +482,6 @@
                     <div class="tab" id="tab-friends" onclick="switchGroupTab('friends')">Amigos</div>
                 </div>
                 
-                <!-- VISTA GRUPOS (Mis Grupos + Búsqueda Global) -->
                 <div id="tab-groups-search" style="display:block; margin-bottom: 15px;">
                     <div style="display: flex; gap: 10px;">
                         <input type="text" id="search-group" placeholder="Buscar grupos globales..." style="flex: 1;" oninput="renderGroups()">
@@ -493,7 +489,6 @@
                     </div>
                 </div>
 
-                <!-- BUSCADOR DE AMIGOS -->
                 <div id="tab-friends-search" style="display:none; margin-bottom: 15px;">
                     <div style="display: flex; gap: 10px;">
                         <input type="text" id="search-friend-id" placeholder="Busca Epic ID..." style="flex: 1;" oninput="renderFriendsAndSearch()">
@@ -501,7 +496,6 @@
                     </div>
                 </div>
 
-                <!-- ACCIONES DEL RADAR -->
                 <div id="tab-radar-actions" style="display:none; margin-bottom: 20px;">
                     <button class="btn-primary" style="background: var(--rl-orange);" onclick="showCreateRadar()"><i class="fas fa-bullhorn"></i> Publicar en Radar</button>
                 </div>
@@ -511,7 +505,6 @@
                 <div id="radar-container" style="display:none;"></div>
             </div>
 
-            <!-- MODAL CREAR GRUPO -->
             <div id="create-group-view" style="display: none;">
                 <div class="glass-panel">
                     <h3 style="margin-bottom: 20px;">Configurar Grupo (Global)</h3>
@@ -537,7 +530,6 @@
                 </div>
             </div>
 
-            <!-- MODAL CREAR RADAR -->
             <div id="create-radar-view" style="display: none;">
                 <div class="glass-panel">
                     <h3 style="margin-bottom: 20px;">Publicar en Radar LFG</h3>
@@ -565,7 +557,6 @@
                 </div>
             </div>
 
-            <!-- CHAT VIEW UNIVERSAL -->
             <div id="chat-view" style="display: none;">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 15px;">
                     <div style="display:flex; align-items:center; gap:12px;">
@@ -648,7 +639,6 @@
 
         const messaging = firebase.messaging();
 
-        // Función para pedir permiso y guardar el token del móvil
         // Función mejorada para pedir permiso y guardar el token
         function requestPushPermission() {
             console.log("Iniciando petición de notificaciones...");
@@ -692,10 +682,9 @@
         let currentUser = null, currentCode = "", tempUser = null;
         let currentChatId = null;
         let currentChatType = 'group'; // 'group' o 'dm'
-        let currentGroupTab = 'my';
+        let currentGroupTab = 'groups'; // Cambiado el por defecto para evitar pantallas vacías
         let tempPresetBase64 = null, viewingProfileEpic = null;
 
-        // DB LISTENERS
         // DB LISTENERS
         db.ref('users').on('value', snap => {
             const data = snap.val();
@@ -719,7 +708,7 @@
             }
             if(currentUser && document.getElementById('screen-groups').classList.contains('active')) {
                 if (currentGroupTab === 'friends') renderFriendsAndSearch();
-                else if (currentGroupTab === 'groups') renderGroups(); // <--- Arreglado aquí
+                else if (currentGroupTab === 'groups') renderGroups();
                 if(currentChatId && currentChatType === 'group') renderMessages();
             }
             if(currentUser && document.getElementById('screen-garage').classList.contains('active')) renderGarage();
@@ -736,7 +725,7 @@
             const data = snap.val();
             groupsDB = data ? Object.values(data) : [];
             if(currentUser && document.getElementById('screen-groups').classList.contains('active')) {
-                if (currentGroupTab === 'groups') renderGroups(); // <--- Arreglado aquí
+                if (currentGroupTab === 'groups') renderGroups();
                 if(currentChatId && currentChatType === 'group') {
                     renderMessages();
                     const group = groupsDB.find(g => g.id === currentChatId);
@@ -912,7 +901,7 @@
             document.getElementById('menu-epic').innerText = currentUser.epic || "Jugador";
             document.getElementById('menu-email').innerText = currentUser.email || "cargando...";
             
-            // 3. Forzar texto en la Home (QUÉ PASA, LOKO)
+            // 3. Forzar texto en la Home
             const homeNameEl = document.getElementById('home-name-id');
             if(homeNameEl) homeNameEl.innerText = currentUser.epic;
         }
@@ -972,19 +961,16 @@
             alerts.forEach(alertObj => {
                 const avatarCode = getUserAvatar(alertObj.from);
                 
-                // Valores por defecto (Amigo aceptado)
                 let titleText = alertObj.from;
                 let subText = "¡Aceptó tu solicitud!";
                 let bgColor = "rgba(16, 185, 129, 0.1)";
                 let borderColor = "var(--success)";
                 
-                // Cambia el diseño si es un Mensaje Privado
                 if (alertObj.type === 'dm_msg') {
                     subText = "Te ha enviado un mensaje";
                     bgColor = "rgba(0, 119, 255, 0.1)";
                     borderColor = "var(--rl-blue)";
                 } 
-                // Cambia el diseño si es un Mensaje de Grupo
                 else if (alertObj.type === 'group_msg') {
                     titleText = alertObj.from; 
                     subText = `${alertObj.sender} escribió en el grupo`;
@@ -1043,10 +1029,8 @@
             if (!currentUser || !currentUser.alerts) return;
             
             const originalLength = currentUser.alerts.length;
-            // Filtramos y nos quedamos solo con las alertas que NO sean del chat que acabas de abrir
             const remainingAlerts = currentUser.alerts.filter(a => !(a.type === type && a.from === chatName));
             
-            // Si había alertas de este chat y las hemos borrado, actualizamos Firebase
             if (originalLength !== remainingAlerts.length) {
                 db.ref('users').child(currentUser.id).update({ alerts: remainingAlerts });
             }
@@ -1082,8 +1066,6 @@
                         })
                     });
                 }
-                // ---------------------------------------
-
                 openProfile(targetEpic); 
             }
         }
@@ -1167,6 +1149,7 @@
             requestPushPermission();
         }
 
+        // SOLUCIÓN 2 APLICADA AQUÍ: Se ha cambiado a `switchGroupTab('groups')` para que no se quede la pantalla en blanco
         function navTo(screen, el) {
             document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
             document.getElementById(`screen-${screen}`).classList.add('active');
@@ -1175,7 +1158,7 @@
                 el.classList.add('active');
             }
             if(screen === 'home') updateHomeStats();
-            if(screen === 'groups') { switchGroupTab('my'); }
+            if(screen === 'groups') { switchGroupTab('groups'); }
             if(screen === 'garage') renderGarage();
             if(screen === 'ranks') renderRankDB(); 
         }
@@ -1188,7 +1171,6 @@
             const container = document.getElementById('leaderboard-container');
             container.innerHTML = "";
 
-            // 1. Extraer el último MMR de cada usuario en el modo seleccionado
             let latestMmrByUser = {};
             mmrData.forEach(m => {
                 if(m.m === mode && !latestMmrByUser[m.u]) {
@@ -1196,7 +1178,6 @@
                 }
             });
 
-            // 2. Convertir a lista, ordenar de mayor a menor y coger el Top 5
             let sortedUsers = Object.keys(latestMmrByUser).map(u => ({
                 epic: u,
                 mmr: latestMmrByUser[u]
@@ -1207,8 +1188,7 @@
                 return;
             }
 
-            // 3. Dibujar a los jugadores con sus medallas
-            const colors = ['#fbbf24', '#9ca3af', '#b45309', 'var(--glass-border)', 'var(--glass-border)']; // Oro, Plata, Bronce, Normal
+            const colors = ['#fbbf24', '#9ca3af', '#b45309', 'var(--glass-border)', 'var(--glass-border)']; 
 
             sortedUsers.forEach((user, index) => {
                 const avatarCode = getUserAvatar(user.epic);
@@ -1234,7 +1214,6 @@
         }
 
         function updateHomeStats() {
-            // 1. Tarjeta ID de Rango
             document.getElementById('home-name-id').innerText = currentUser.epic;
             const myHistory = mmrData.filter(m => m.u === currentUser.epic);
             let topRank = { name: "Bronce I", div: "División I", color: "#824e2d" };
@@ -1254,17 +1233,15 @@
                 iconEl.style.boxShadow = `0 0 20px ${topRank.color}60`;
             }
 
-            // 2. Lógica del Meta Dinámico
             let fennecRate = 45; let octaneRate = 40; let goals = 3; let winrate = 62;
             const isHighElo = topRank.name.includes("Supersonic") || topRank.name.includes("Grand Champion") || topRank.name.includes("Champion");
             
             if(isHighElo) {
-                fennecRate = 68; octaneRate = 26; goals = 1; winrate = 78; // En elo alto se defiende mejor y se remonta menos
+                fennecRate = 68; octaneRate = 26; goals = 1; winrate = 78; 
             }
 
             document.getElementById('meta-rank-context').innerText = topRank.name === 'Bronce I' ? 'Global' : topRank.name;
 
-            // 3. Disparador de Animaciones Visuales
             setTimeout(() => {
                 document.getElementById('bar-fennec').style.width = fennecRate + '%';
                 document.getElementById('bar-octane').style.width = octaneRate + '%';
@@ -1273,11 +1250,10 @@
                 animateValue('val-octane', 0, octaneRate, 1500, '%');
                 animateValue('val-goals', 0, goals, 1500, '');
                 animateValue('val-winrate', 0, winrate, 1500, '');
-            }, 150); // Pequeño delay para que se vea fluida al abrir la app
+            }, 150); 
             renderLeaderboard();
         }
 
-        // Función matemática para animar números fluidamente
         function animateValue(id, start, end, duration, suffix) {
             let obj = document.getElementById(id);
             if(!obj) return;
@@ -1294,7 +1270,6 @@
             window.requestAnimationFrame(step);
         }
 
-        // 4. Iniciar el Reloj de Torneos Automático
         function startTournamentTimer() {
             function updateTimer() {
                 const now = new Date();
@@ -1316,7 +1291,6 @@
             setInterval(updateTimer, 1000); updateTimer();
         }
         
-        // Llamar al reloj justo al iniciar la app
         setTimeout(startTournamentTimer, 1000);
 
         // GARAGE LOGIC
@@ -1455,7 +1429,7 @@
                     if (mmr >= min) return { name: r.n, div: "", color: r.c };
                     continue;
                 }
-                const divs = [r.d4, r.d3, r.d2, r.d1]; // Comprobación top-down descentente
+                const divs = [r.d4, r.d3, r.d2, r.d1]; 
                 const divNames = ["IV", "III", "II", "I"];
                 for (let i = 0; i < 4; i++) {
                     if (divs[i] === "-") continue;
@@ -1469,12 +1443,27 @@
         }
 
         // MMR TRACKER CLOUD LOGIC
+        // MMR TRACKER CLOUD LOGIC
         function addMmr() {
             const valInput = document.getElementById('mmr-val').value;
             const mode = document.getElementById('mmr-mode').value;
             if(!valInput) return;
             
             const val = parseInt(valInput);
+
+            // --- NUEVO: LÍMITE DE MMR MÁXIMO Y MÍNIMO ---
+            if (val > 2700) {
+                alert("⚠️ El MMR máximo permitido es 2700. ¡Ni soñando llegas tan alto chaval!");
+                document.getElementById('mmr-val').value = "";
+                return;
+            }
+            if (val < 0) {
+                alert("⚠️ El MMR no puede ser negativo.");
+                document.getElementById('mmr-val').value = "";
+                return;
+            }
+            // --------------------------------------------
+
             const date = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
             
             const myHistoryOfMode = mmrData.filter(m => m.u === currentUser.epic && m.m === mode);
@@ -1507,7 +1496,6 @@
             const lastEntry = myHistory[0];
             document.getElementById('tracker-live-mmr').innerText = `${lastEntry.v} MMR`;
             
-            // CALCULAR Y MOSTRAR RANGO EN TIEMPO REAL
             const rankInfo = getRankInfo(lastEntry.v, lastEntry.m);
             document.getElementById('tracker-live-rank').innerHTML = `<span style="color:${rankInfo.color}; text-shadow: 0 0 10px ${rankInfo.color}40;">${rankInfo.name} ${rankInfo.div}</span>`;
             
@@ -1523,7 +1511,6 @@
                 if(currentDiff > 0) diffBadge = `<span style="font-weight:700; color:var(--success); font-size:0.9rem;">+${currentDiff}</span>`;
                 if(currentDiff < 0) diffBadge = `<span style="font-weight:700; color:var(--danger); font-size:0.9rem;">${currentDiff}</span>`;
 
-                // Añadimos también el cálculo visual de rango en cada fila del historial
                 const rowRank = getRankInfo(m.v, m.m);
 
                 container.innerHTML += `
@@ -1554,12 +1541,10 @@
             document.getElementById('tab-radar').classList.toggle('active', tab === 'radar');
             document.getElementById('tab-friends').classList.toggle('active', tab === 'friends');
             
-            // Ocultar todos los contenedores principales
             document.getElementById('groups-container').style.display = 'none';
             document.getElementById('radar-container').style.display = 'none';
             document.getElementById('friends-container').style.display = 'none';
             
-            // Ocultar controles específicos
             document.getElementById('tab-groups-search').style.display = 'none';
             document.getElementById('tab-radar-actions').style.display = 'none';
             document.getElementById('tab-friends-search').style.display = 'none';
@@ -1581,6 +1566,7 @@
             }
         }
 
+        // SOLUCIÓN 1 APLICADA AQUÍ: Limpieza de la lógica de renderizado de grupos para evitar invisibilidad
         function renderGroups() {
             const container = document.getElementById('groups-container');
             container.innerHTML = "";
@@ -1588,6 +1574,7 @@
             let list = groupsDB.filter(g => g && g.name); 
 
             if (query === "") {
+                // Mostrar solo MIS grupos
                 list = list.filter(g => g.members && g.members.includes(currentUser.epic));
                 if(list.length === 0) {
                     container.innerHTML = `<p style="text-align:center; color:var(--text-muted); margin-top:20px;">No estás en ningún grupo. ¡Busca uno arriba o créalo!</p>`;
@@ -1595,6 +1582,7 @@
                 }
                 container.innerHTML += `<p style="font-size:0.7rem; color:var(--rl-blue); font-weight:700; margin-bottom:12px; text-transform:uppercase;">Tus Grupos:</p>`;
             } else {
+                // Mostrar resultados de búsqueda global
                 list = list.filter(g => g.name.toLowerCase().includes(query));
                 if(list.length === 0) {
                     container.innerHTML = `<p style="text-align:center; color:var(--text-muted); margin-top:20px;">No se encontraron grupos con ese nombre.</p>`;
@@ -1663,7 +1651,6 @@
                     const isFriend = (currentUser.friends || []).includes(u.epic);
                     const friendBadge = isFriend ? `<span style="font-size:0.6rem; background:rgba(16,185,129,0.15); color:var(--success); padding:2px 6px; border-radius:4px; font-weight:800; margin-left:10px; border:1px solid rgba(16,185,129,0.3);">AMIGO</span>` : '';
                     
-                    // LÓGICA DE BOTONES: Si es amigo, botón de Chat. Si no, botón de Añadir (Abre el perfil).
                     const actionBtn = isFriend 
                         ? `<button class="btn-primary" style="margin:0; width:45px; height:45px; padding:0; border-radius:50%; background:var(--rl-blue);" onclick="openDM('${u.epic}')"><i class="fas fa-comment"></i></button>`
                         : `<button class="btn-primary" style="margin:0; width:45px; height:45px; padding:0; border-radius:50%; background:transparent; border:1px solid var(--rl-blue); color:var(--rl-blue);" onclick="openProfile('${u.epic}')"><i class="fas fa-user-plus"></i></button>`;
@@ -1728,7 +1715,6 @@
         }
         function deleteRadar(id) { db.ref('radar').child(id).remove(); }
 
-
         // ================= LÓGICA DMs =================
         function getDMId(epic1, epic2) {
             return [epic1, epic2].sort().join('_');
@@ -1745,7 +1731,6 @@
             currentChatType = 'dm'; 
             currentChatId = getDMId(currentUser.epic, friendEpic);
             
-            // --- NUEVO: Limpiamos la alerta de la campanita al abrir el mensaje ---
             clearChatAlerts(friendEpic, 'dm_msg');
             
             document.getElementById('chat-title').innerText = friendEpic;
@@ -1866,52 +1851,15 @@
         }
 
         function openMyProfile() {
-            toggleSideMenu(); // Esto cierra el menú lateral
-            openProfile(currentUser.epic); // Esto te lleva directo a tu perfil
+            toggleSideMenu(); 
+            openProfile(currentUser.epic); 
         }
 
         // =====================================
         // CLANES Y CHAT UNIVERSAL
         // =====================================
         function toggleGroupPass() { document.getElementById('pass-container').style.display = document.getElementById('new-group-type').value === 'private' ? 'block' : 'none'; }
-        function renderGroups() {
-            const container = document.getElementById('groups-container');
-            container.innerHTML = "";
-            const search = document.getElementById('search-group').value.toLowerCase();
-            let list = groupsDB.filter(g => g && g.name); 
-
-            if(currentGroupTab === 'my') {
-                list = list.filter(g => g.members && g.members.includes(currentUser.epic));
-            } else {
-                list = list.filter(g => !(g.members && g.members.includes(currentUser.epic)) && g.name.toLowerCase().includes(search));
-            }
-
-            if(list.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:var(--text-muted); margin-top:20px;">No se encontraron grupos en este apartado.</p>`;
-                return;
-            }
-
-            list.forEach(g => {
-                const membersList = g.members || [];
-                const isMember = membersList.includes(currentUser.epic);
-                const badge = g.type === 'private' ? `<span class="badge badge-priv"><i class="fas fa-lock"></i> Privado</span>` : `<span class="badge badge-pub"><i class="fas fa-globe"></i> Público</span>`;
-                const btnText = isMember ? "Abrir" : "Unirse";
-                const btnColor = isMember ? "var(--rl-blue)" : "var(--rl-orange)";
-                
-                container.innerHTML += `
-                    <div class="group-card">
-                        <div>
-                            <h4 style="margin-bottom: 5px;">${g.name}</h4>
-                            <div style="display:flex; gap:8px; align-items:center;">
-                                ${badge}
-                                <span style="font-size:0.7rem; color:var(--text-muted);"><i class="fas fa-users"></i> ${membersList.length}</span>
-                            </div>
-                        </div>
-                        <button class="btn-primary" style="margin:0; width:auto; padding: 10px 20px; background: ${btnColor};" onclick="joinOrEnterChat(${g.id})">${btnText}</button>
-                    </div>`;
-            });
-        }
-
+        
         function showCreateGroup() { document.getElementById('group-list-view').style.display='none'; document.getElementById('create-group-view').style.display='block'; }
         function hideCreateGroup() { document.getElementById('group-list-view').style.display='block'; document.getElementById('create-group-view').style.display='none'; }
 
@@ -1955,7 +1903,6 @@
             currentChatType = 'group'; 
             currentChatId = group.id;
             
-            // --- NUEVO: Limpiamos la alerta de la campanita al abrir el grupo ---
             clearChatAlerts(group.name, 'group_msg');
             
             document.getElementById('chat-title').innerText = group.name;
@@ -1984,8 +1931,6 @@
             db.ref(`groups/${group.id}/members`).set(newMembers);
             db.ref(`groups/${group.id}/messages`).push({u: "Sistema", m: `${currentUser.epic} abandonó.`}); exitChat();
         }
-
-        function getDMId(epic1, epic2) { return [epic1, epic2].sort().join('_'); }
 
         function exitChat() {
             document.getElementById('chat-view').style.display = 'none';
@@ -2032,68 +1977,75 @@
             setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
         }
 
+        // SOLUCIÓN 3 APLICADA AQUÍ: Lectura forzada desde la BD de Firebase para obtener el fcmToken exacto.
         function sendMessage() {
             const input = document.getElementById('chat-input');
             const txt = input.value.trim();
             if(!txt) return;
             
             if(currentChatType === 'group') {
-                // 1. Guardar mensaje
                 db.ref(`groups/${currentChatId}/messages`).push({ u: currentUser.epic, m: txt });
                 
-                // 2. Enviar Push al móvil y Alerta a la campanita
                 const group = groupsDB.find(g => g.id === currentChatId);
                 if (group && group.members) {
                     group.members.forEach(memberEpic => {
-                        if (memberEpic !== currentUser.epic) { // No te avisa a ti mismo
-                            const memberProfile = usersDB.find(u => u.epic === memberEpic);
-                            if (memberProfile) {
-                                // A. Envío al móvil (Arreglado con headers)
-                                if (memberProfile.fcmToken) {
-                                    fetch('/.netlify/functions/sendPush', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({
-                                            token: memberProfile.fcmToken,
-                                            title: `👥 ${group.name}`,
-                                            body: `${currentUser.epic}: ${txt}`
-                                        })
-                                    });
+                        if (memberEpic !== currentUser.epic) { 
+                            // Buscamos a cada usuario de forma directa en Firebase para asegurar que su token existe y es el último
+                            db.ref('users').orderByChild('epic').equalTo(memberEpic).once('value', snap => {
+                                if(snap.exists()) {
+                                    const data = snap.val();
+                                    const memberId = Object.keys(data)[0];
+                                    const memberProfile = data[memberId];
+
+                                    if (memberProfile.fcmToken) {
+                                        fetch('/.netlify/functions/sendPush', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                token: memberProfile.fcmToken,
+                                                title: `👥 ${group.name}`,
+                                                body: `${currentUser.epic}: ${txt}`
+                                            })
+                                        }).catch(err => console.error("Error Push:", err));
+                                    }
+                                    
+                                    let theirAlerts = memberProfile.alerts || [];
+                                    theirAlerts.push({ id: Date.now(), from: group.name, sender: currentUser.epic, type: 'group_msg' });
+                                    db.ref('users').child(memberId).update({ alerts: theirAlerts });
                                 }
-                                // B. Encender Campanita In-App
-                                let theirAlerts = memberProfile.alerts || [];
-                                theirAlerts.push({ id: Date.now(), from: group.name, sender: currentUser.epic, type: 'group_msg' });
-                                db.ref('users').child(memberProfile.id).update({ alerts: theirAlerts });
-                            }
+                            });
                         }
                     });
                 }
             } else if (currentChatType === 'dm') {
-                // 1. Guardar mensaje
                 db.ref(`dms/${currentChatId}/messages`).push({ u: currentUser.epic, m: txt });
                 
-                // 2. Enviar Push al móvil y Alerta a la campanita
                 const otherUserEpic = currentChatId.split('_').find(e => e !== currentUser.epic);
-                const otherUserProfile = usersDB.find(u => u.epic === otherUserEpic);
                 
-                if (otherUserProfile) {
-                    // A. Envío al móvil
-                    if (otherUserProfile.fcmToken) {
-                        fetch('/.netlify/functions/sendPush', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                token: otherUserProfile.fcmToken,
-                                title: `💬 Mensaje de ${currentUser.epic}`,
-                                body: txt
-                            })
-                        });
+                // Buscamos a la otra persona de forma directa en Firebase para asegurar el token
+                db.ref('users').orderByChild('epic').equalTo(otherUserEpic).once('value', snap => {
+                    if(snap.exists()) {
+                        const data = snap.val();
+                        const otherUserId = Object.keys(data)[0];
+                        const otherUserProfile = data[otherUserId];
+
+                        if (otherUserProfile.fcmToken) {
+                            fetch('/.netlify/functions/sendPush', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    token: otherUserProfile.fcmToken,
+                                    title: `💬 Mensaje de ${currentUser.epic}`,
+                                    body: txt
+                                })
+                            }).catch(err => console.error("Error Push:", err));
+                        }
+                        
+                        let theirAlerts = otherUserProfile.alerts || [];
+                        theirAlerts.push({ id: Date.now(), from: currentUser.epic, type: 'dm_msg' });
+                        db.ref('users').child(otherUserId).update({ alerts: theirAlerts });
                     }
-                    // B. Encender Campanita In-App
-                    let theirAlerts = otherUserProfile.alerts || [];
-                    theirAlerts.push({ id: Date.now(), from: currentUser.epic, type: 'dm_msg' });
-                    db.ref('users').child(otherUserProfile.id).update({ alerts: theirAlerts });
-                }
+                });
             }
             
             input.value = "";
