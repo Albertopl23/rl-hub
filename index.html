@@ -484,7 +484,7 @@
                 
                 <div id="tab-groups-search" style="display:block; margin-bottom: 15px;">
                     <div style="display: flex; gap: 10px;">
-                        <input type="text" id="search-group" placeholder="Buscar grupos globales..." style="flex: 1;" oninput="renderGroups()">
+                        <input type="text" id="search-group" placeholder="Buscar grupos..." style="flex: 1;" oninput="renderGroups()">
                         <button class="btn-primary" style="margin:0; width:auto; padding:0 15px; background:var(--rl-orange);" onclick="showCreateGroup()"><i class="fas fa-plus"></i> Crear</button>
                     </div>
                 </div>
@@ -573,6 +573,28 @@
                     <div class="chat-input-area">
                         <input type="text" id="chat-input" placeholder="Escribe aquí..." style="padding-left: 15px; border-radius: 20px;">
                         <button class="btn-primary" style="margin:0; width: 55px; border-radius: 50%;" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+            <!-- MODAL AJUSTES DE GRUPO -->
+            <div id="group-settings-view" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 3000; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+                <div class="glass-panel" style="width: 90%; max-width: 400px; position: relative;">
+                    <i class="fas fa-times" style="position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 1.2rem;" onclick="closeGroupSettings()"></i>
+                    <h3 style="margin-bottom: 20px; font-size: 1.2rem;"><i class="fas fa-cog" style="color:var(--rl-blue);"></i> Ajustes del Grupo</h3>
+
+                    <!-- Renombrar (Solo Creador) -->
+                    <div id="rename-group-box" style="display:none; margin-bottom: 20px;">
+                        <label style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Renombrar Grupo</label>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <input type="text" id="rename-group-input" placeholder="Nuevo nombre" style="flex: 1; padding: 10px;">
+                            <button class="btn-primary" style="margin: 0; width: auto; padding: 0 15px; border-radius: 12px;" onclick="renameCurrentGroup()"><i class="fas fa-save"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Miembros -->
+                    <label style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Lista de Miembros</label>
+                    <div id="group-members-list" style="max-height: 250px; overflow-y: auto; margin-top: 10px; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 10px; border: 1px solid var(--glass-border);">
+                        <!-- Generado por JS -->
                     </div>
                 </div>
             </div>
@@ -1911,11 +1933,17 @@
             document.getElementById('chat-view').style.display = 'block';
             
             const actionsBox = document.getElementById('chat-action-container');
+            
+            // --- NUEVO: Botón de Ajustes y botones de Salir/Borrar ---
+            let buttonsHtml = `<button class="btn-primary" style="margin:0 5px 0 0; background:var(--rl-blue); font-size:0.75rem; padding:6px 10px; width:auto;" onclick="openGroupSettings()"><i class="fas fa-users-cog"></i></button>`;
+
             if(group.creator === currentUser.epic) {
-                actionsBox.innerHTML = `<button class="btn-primary" style="margin:0; background:var(--danger); font-size:0.75rem; padding:6px 12px; width:auto;" onclick="deleteCurrentGroup()"><i class="fas fa-trash-alt"></i></button>`;
+                buttonsHtml += `<button class="btn-primary" style="margin:0; background:var(--danger); font-size:0.75rem; padding:6px 12px; width:auto;" onclick="deleteCurrentGroup()"><i class="fas fa-trash-alt"></i></button>`;
             } else {
-                actionsBox.innerHTML = `<button class="btn-primary" style="margin:0; background:var(--rl-orange); font-size:0.75rem; padding:6px 12px; width:auto;" onclick="leaveCurrentGroup()"><i class="fas fa-door-open"></i></button>`;
+                buttonsHtml += `<button class="btn-primary" style="margin:0; background:var(--rl-orange); font-size:0.75rem; padding:6px 12px; width:auto;" onclick="leaveCurrentGroup()"><i class="fas fa-door-open"></i></button>`;
             }
+            
+            actionsBox.innerHTML = buttonsHtml;
             renderMessages();
         }
 
@@ -1930,6 +1958,81 @@
             const newMembers = (group.members || []).filter(m => m !== currentUser.epic);
             db.ref(`groups/${group.id}/members`).set(newMembers);
             db.ref(`groups/${group.id}/messages`).push({u: "Sistema", m: `${currentUser.epic} abandonó.`}); exitChat();
+        }
+
+        function openGroupSettings() {
+            const group = groupsDB.find(g => g.id === currentChatId);
+            if(!group) return;
+
+            document.getElementById('group-settings-view').style.display = 'flex';
+
+            // Mostrar caja de renombrar solo si eres el creador
+            const renameBox = document.getElementById('rename-group-box');
+            if(group.creator === currentUser.epic) {
+                renameBox.style.display = 'block';
+                document.getElementById('rename-group-input').value = group.name;
+            } else {
+                renameBox.style.display = 'none';
+            }
+
+            // Dibujar la lista de miembros
+            const listContainer = document.getElementById('group-members-list');
+            listContainer.innerHTML = "";
+            
+            group.members.forEach(m => {
+                // Le ponemos una coronita al creador
+                const isCreator = (m === group.creator) ? `<i class="fas fa-crown" style="color: #fbbf24; font-size: 0.8rem; margin-left: 5px;" title="Creador"></i>` : '';
+                
+                listContainer.innerHTML += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor:pointer;" onclick="openProfile('${m}'); closeGroupSettings();">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width: 35px; height: 35px; border-radius: 50%; background: var(--rl-blue); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; overflow: hidden; flex-shrink:0;">
+                                ${getUserAvatar(m)}
+                            </div>
+                            <span style="font-size: 0.95rem; font-weight: 700; color: white;">${m} ${isCreator}</span>
+                        </div>
+                        <i class="fas fa-chevron-right" style="color:var(--text-muted); font-size:0.8rem;"></i>
+                    </div>
+                `;
+            });
+        }
+
+        function closeGroupSettings() {
+            document.getElementById('group-settings-view').style.display = 'none';
+        }
+
+        function renameCurrentGroup() {
+            // 1. Buscamos el grupo actual asegurándonos de que exista
+            const group = groupsDB.find(g => g && g.id === currentChatId);
+            if(!group || group.creator !== currentUser.epic) return;
+
+            const newName = document.getElementById('rename-group-input').value.trim();
+            if(!newName) return alert("El nombre no puede estar vacío.");
+            
+            // Si le das a guardar sin haber cambiado nada, no hace nada
+            if(group.name && newName.toLowerCase() === group.name.toLowerCase()) return; 
+
+            // 2. Escáner A PRUEBA DE BALAS (Esquiva grupos sin nombre o corruptos)
+            const nameExists = groupsDB.some(g => 
+                g && 
+                g.id !== group.id && 
+                g.name && 
+                g.name.toLowerCase() === newName.toLowerCase()
+            );
+
+            if(nameExists) {
+                return alert("⚠️ Ya existe un grupo en la red con ese nombre exacto. ¡Elige otro!");
+            }
+
+            // 3. Guardado en la nube
+            db.ref('groups').child(group.id).update({ name: newName }).then(() => {
+                db.ref(`groups/${group.id}/messages`).push({ u: "Sistema", m: `El creador cambió el nombre del grupo a "${newName}"` });
+                document.getElementById('chat-title').innerText = newName;
+                closeGroupSettings();
+            }).catch(err => {
+                console.error("Error de Firebase al renombrar:", err);
+                alert("Error de conexión al guardar el nombre.");
+            });
         }
 
         function exitChat() {
@@ -1990,17 +2093,16 @@
                 if (group && group.members) {
                     group.members.forEach(memberEpic => {
                         if (memberEpic !== currentUser.epic) { 
-                            // Buscamos a cada usuario de forma directa en Firebase para asegurar que su token existe y es el último
                             db.ref('users').orderByChild('epic').equalTo(memberEpic).once('value', snap => {
                                 if(snap.exists()) {
                                     const data = snap.val();
                                     const memberId = Object.keys(data)[0];
                                     const memberProfile = data[memberId];
 
+                                    // AQUÍ ESTÁ EL ARREGLO: Quitamos el header maldito
                                     if (memberProfile.fcmToken) {
                                         fetch('/.netlify/functions/sendPush', {
                                             method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
                                             body: JSON.stringify({
                                                 token: memberProfile.fcmToken,
                                                 title: `👥 ${group.name}`,
@@ -2022,17 +2124,16 @@
                 
                 const otherUserEpic = currentChatId.split('_').find(e => e !== currentUser.epic);
                 
-                // Buscamos a la otra persona de forma directa en Firebase para asegurar el token
                 db.ref('users').orderByChild('epic').equalTo(otherUserEpic).once('value', snap => {
                     if(snap.exists()) {
                         const data = snap.val();
                         const otherUserId = Object.keys(data)[0];
                         const otherUserProfile = data[otherUserId];
 
+                        // AQUÍ TAMBIÉN: Sin el header
                         if (otherUserProfile.fcmToken) {
                             fetch('/.netlify/functions/sendPush', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                     token: otherUserProfile.fcmToken,
                                     title: `💬 Mensaje de ${currentUser.epic}`,
