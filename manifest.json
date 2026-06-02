@@ -1,0 +1,32 @@
+{
+  "name": "RL Hub | Pro Dashboard",
+  "short_name": "RL Hub",
+  "description": "La herramienta definitiva para jugadores competitivos de Rocket League. Encuentra dúo, chatea con tu clan y sigue tu MMR en tiempo real.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060b14",
+  "theme_color": "#060b14",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/img/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/img/captura.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}
