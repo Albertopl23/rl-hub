@@ -197,6 +197,50 @@
         .stat-num-desc { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; line-height: 1.3; }
 
         @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- MARCOS ANIMADOS DE RECOMPENSA --- */
+        
+        /* 1 Mes: Constancia (Verde Esmeralda) */
+        .marco-esmeralda {
+            border: 3px solid var(--success) !important;
+            animation: pulsoEsmeralda 2s infinite alternate ease-in-out;
+        }
+        @keyframes pulsoEsmeralda {
+            0% { box-shadow: 0 0 5px var(--success), inset 0 0 5px var(--success); }
+            100% { box-shadow: 0 0 25px var(--success), inset 0 0 15px var(--success); filter: brightness(1.2); }
+        }
+
+        /* 3 Meses: Disciplina (Fuego / Naranja) */
+        .marco-fuego {
+            border: 3px solid var(--rl-orange) !important;
+            animation: pulsoFuego 1.2s infinite alternate ease-in-out;
+        }
+        @keyframes pulsoFuego {
+            0% { box-shadow: 0 0 5px var(--rl-orange), inset 0 0 5px var(--rl-orange); border-color: #ff2a00 !important; }
+            100% { box-shadow: 0 0 30px var(--rl-orange), inset 0 0 20px var(--rl-orange); border-color: #ffaa00 !important; }
+        }
+
+        /* 9 Meses: Dedicación (Azul Eléctrico Rápido) */
+        .marco-electrico {
+            border: 3px solid var(--rl-blue) !important;
+            animation: pulsoElectrico 0.8s infinite alternate ease-in-out;
+        }
+        @keyframes pulsoElectrico {
+            0% { box-shadow: 0 0 10px var(--rl-blue), inset 0 0 10px var(--rl-blue); filter: brightness(1); }
+            100% { box-shadow: 0 0 35px #00d4ff, inset 0 0 25px #00d4ff; filter: brightness(1.4); border-color: #00d4ff !important; }
+        }
+        
+        /* 1 Año: Leyenda (Oro que cambia de color) */
+        .marco-leyenda {
+            border: 3px solid #fbbf24 !important;
+            animation: pulsoLeyenda 3s infinite linear;
+        }
+        @keyframes pulsoLeyenda {
+            0% { box-shadow: 0 0 20px #fbbf24; border-color: #fbbf24 !important; }
+            33% { box-shadow: 0 0 30px #ff5500; border-color: #ff5500 !important; }
+            66% { box-shadow: 0 0 30px #0077ff; border-color: #0077ff !important; }
+            100% { box-shadow: 0 0 20px #fbbf24; border-color: #fbbf24 !important; }
+        }
     </style>
 </head>
 <body>
@@ -303,8 +347,9 @@
             <h2 id="menu-epic" style="font-size: 1.4rem; margin-bottom: 2px;">Player</h2>
             <p id="menu-email" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">email@test.com</p>
             
-            <button class="btn-primary" style="margin: 0 0 30px 0; padding: 10px; font-size: 0.85rem; background: var(--rl-blue);" onclick="openMyProfile()"><i class="fas fa-user"></i> Ver mi Perfil</button>
-            
+            <button class="btn-primary" style="margin: 0 0 30px 0; padding: 10px; font-size: 0.85rem; background: var(--rl-blue);" onclick="toggleSideMenu(); openMyProfile()"><i class="fas fa-user"></i> Ver mi Perfil</button>
+
+
             <div class="input-group">
                 <label>Tu Contraseña</label>
                 <input type="password" id="view-pass" readonly style="background: rgba(255,255,255,0.05); padding-left: 15px;">
@@ -352,6 +397,34 @@
                     </div>
             </div>
 
+            <!-- PANEL CALENDARIO MENSUAL -->
+            <div class="panel-racha" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                    <div class="meta-title" style="margin: 0; font-size: 1.1rem;">
+                        <i class="fas fa-calendar-alt" style="color: var(--rl-orange);"></i> <span id="mes-actual-txt">Calendario</span>
+                    </div>
+                    <div id="racha-counter" style="font-size: 1.2rem; font-weight: 900; color: var(--rl-orange); text-shadow: 0 0 10px var(--rl-orange-glow);">
+                        0 <i class="fas fa-fire-alt" style="font-size: 1rem;"></i>
+                    </div>
+                </div>
+                
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px; line-height: 1.4;">Controla tus accesos diarios. Ficha hoy para mantener tu racha activa y ganar medallas.</p>
+                
+                <!-- Cabecera Días Semana -->
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 10px; text-align: center; font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
+                    <div>L</div><div>M</div><div>X</div><div>J</div><div>V</div><div>S</div><div>D</div>
+                </div>
+                
+                <!-- Cuadrícula del Calendario Real -->
+                <div id="calendario-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 20px;">
+                    <!-- Se rellena con JS -->
+                </div>
+
+                <button id="btn-reclamar-dia" class="btn-primary" style="margin: 0; background: linear-gradient(90deg, var(--success), #059669); border-radius: 12px; transition: 0.3s;" onclick="registrarAccesoDiario()">
+                    <i class="fas fa-calendar-check"></i> Fichar Hoy
+                </button>
+            </div>
+
             <div class="meta-dashboard">
                 <div class="meta-title">
                     <i class="fas fa-chart-pie" style="color: var(--rl-blue);"></i>
@@ -379,6 +452,7 @@
                     </div>
                 </div>
             </div>
+
         </main>
 
         <main id="screen-tracker" class="app-screen">
@@ -600,6 +674,22 @@
                     <p style="font-size: 0.7rem; color: var(--success); font-weight: 800; margin-bottom: 15px;"><i class="fas fa-check-circle"></i> TRACKER VINCULADO</p>
                     <div id="profile-tracker-btn-container"></div>
                     <button class="btn-primary" id="unlink-trn-btn" style="background: transparent; box-shadow: none; border: 1px solid var(--danger); color: var(--danger); margin-top: 10px; padding: 10px;" onclick="removeTrnLink()">Desvincular</button>
+                </div>
+            </div>
+
+            <!-- COLECCIÓN DE MARCOS ANIMADOS -->
+            <div class="tracker-panel vitrina-marcos" style="margin-top: 20px; margin-bottom: 15px; text-align: left;">
+                <h3 style="margin-bottom: 15px; font-size: 1.1rem; color: var(--rl-blue); text-align: center;"><i class="fas fa-camera-retro"></i> Marcos Desbloqueables</h3>
+                <div id="profile-marcos-container" style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <!-- Se rellenan con JS dependiendo de la racha -->
+                </div>
+            </div>
+
+            <!-- VITRINA DE LOGROS -->
+            <div class="tracker-panel vitrina-logros" style="margin-top: 20px; text-align: left;">
+                <h3 style="margin-bottom: 15px; font-size: 1.1rem; color: #fbbf24; text-align: center;"><i class="fas fa-medal"></i> Vitrina de Logros</h3>
+                <div id="profile-logros-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <!-- Se rellenan con JS dependiendo de la racha -->
                 </div>
             </div>
             
@@ -1258,6 +1348,7 @@
             
             renderLeaderboard();
             comprobarCartelNotificaciones(); // Cartel visual revisado al final
+            renderRachaHome();
         }
 
         function animateValue(id, start, end, duration, suffix) {
@@ -1831,6 +1922,9 @@
 
             const unlinkBtn = document.getElementById('unlink-trn-btn');
             unlinkBtn.style.display = (isMe && hasTrn) ? 'inline-block' : 'none';
+            
+            renderPerfilLogros(userProfile);
+            renderPerfilMarcos(userProfile);
 
             document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-profile').classList.add('active');
@@ -2121,6 +2215,91 @@
             input.value = "";
         }
 
+        // =====================================
+        // PANEL TÁCTICO: CARA A CARA
+        // =====================================
+        function compararRival() {
+            const rivalEpic = document.getElementById('input-rival-epic').value.trim();
+            if(!rivalEpic) return alert("Escribe el Epic ID de un jugador para analizarlo.");
+            if(rivalEpic.toLowerCase() === currentUser.epic.toLowerCase()) return alert("No puedes compararte contigo mismo, ¡busca un rival!");
+
+            // 1. Buscar los datos del rival en la base de datos de MMR
+            const rivalHistory = mmrData.filter(m => m.u.toLowerCase() === rivalEpic.toLowerCase());
+            
+            if(rivalHistory.length === 0) {
+                alert(`No hemos encontrado registros de MMR para "${rivalEpic}".`);
+                return;
+            }
+
+            // 2. Extraer los datos de ambos
+            const myHistory = mmrData.filter(m => m.u === currentUser.epic);
+            const myMmr = myHistory.length > 0 ? myHistory[0].v : 0;
+            const rivalMmr = rivalHistory[0].v; // Cogemos el último MMR registrado del rival
+            const rivalNombreReal = rivalHistory[0].u; // Respetamos sus mayúsculas/minúsculas originales
+            const modoComparacion = rivalHistory[0].m || '2v2'; // Comparamos basándonos en su último modo jugado
+
+            // 3. Conseguir nombres y colores de rangos
+            const myRank = getRankInfo(myMmr, modoComparacion);
+            const rivalRank = getRankInfo(rivalMmr, modoComparacion);
+
+            // 4. Matemáticas para la barra de progreso de dominio
+            const totalMmr = myMmr + rivalMmr;
+            const myPct = totalMmr === 0 ? 50 : (myMmr / totalMmr) * 100;
+            const rivalPct = totalMmr === 0 ? 50 : (rivalMmr / totalMmr) * 100;
+
+            const diff = myMmr - rivalMmr;
+            // Le ponemos una corona de oro al que vaya ganando
+            const coronaYo = diff > 0 ? '<i class="fas fa-crown" style="color:#fbbf24; margin-left: 5px; font-size: 0.8rem; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);"></i>' : '';
+            const coronaRival = diff < 0 ? '<i class="fas fa-crown" style="color:#fbbf24; margin-right: 5px; font-size: 0.8rem; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);"></i>' : '';
+
+            const resDiv = document.getElementById('resultado-duelo');
+            resDiv.style.display = 'block';
+            
+            // 5. Pintar el tablero
+            resDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <!-- Lado Izquierdo: Tú -->
+                    <div class="jugador-izq" style="text-align: center; flex: 1;">
+                        <div class="msg-avatar" style="margin: 0 auto 10px; width: 50px; height: 50px; font-size: 1.3rem;">${getUserAvatar(currentUser.epic)}</div>
+                        <h4 style="font-size: 0.85rem; text-transform: uppercase;">${currentUser.epic} ${coronaYo}</h4>
+                        <p style="font-size: 0.7rem; color: ${myRank.color}; font-weight: 800; margin-bottom: 5px;">${myRank.name}</p>
+                        <p style="font-size: 1.5rem; font-weight: 900; color: white; text-shadow: 0 0 15px var(--rl-blue-glow);">${myMmr}</p>
+                    </div>
+                    
+                    <!-- Centro: VS -->
+                    <div class="marcador-vs" style="font-size: 1.2rem; font-weight: 900; color: var(--text-muted); padding: 0 15px; opacity: 0.5; font-style: italic;">VS</div>
+                    
+                    <!-- Lado Derecho: Rival -->
+                    <div class="jugador-der" style="text-align: center; flex: 1;">
+                        <div class="msg-avatar" style="margin: 0 auto 10px; width: 50px; height: 50px; font-size: 1.3rem; background: var(--danger); border-color: rgba(239, 68, 68, 0.3);">${getUserAvatar(rivalNombreReal)}</div>
+                        <h4 style="font-size: 0.85rem; text-transform: uppercase;">${coronaRival} ${rivalNombreReal}</h4>
+                        <p style="font-size: 0.7rem; color: ${rivalRank.color}; font-weight: 800; margin-bottom: 5px;">${rivalRank.name}</p>
+                        <p style="font-size: 1.5rem; font-weight: 900; color: white; text-shadow: 0 0 15px rgba(239, 68, 68, 0.4);">${rivalMmr}</p>
+                    </div>
+                </div>
+
+                <!-- Barra de Dominio de MMR -->
+                <div class="barra-comparacion" style="background: rgba(0,0,0,0.6); height: 10px; border-radius: 5px; display: flex; overflow: hidden; margin-top: 20px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);">
+                    <div style="width: 50%; background: var(--rl-blue); transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1);" id="barra-duelo-yo"></div>
+                    <div style="width: 50%; background: var(--danger); transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1);" id="barra-duelo-rival"></div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">
+                    <span style="color: var(--rl-blue);">Tú</span>
+                    <span style="color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px;">Diferencia: ${Math.abs(diff)} Puntos</span>
+                    <span style="color: var(--danger);">Rival</span>
+                </div>
+            `;
+
+            // Animación suave de la barra después de pintar el tablero
+            setTimeout(() => {
+                document.getElementById('barra-duelo-yo').style.width = myPct + '%';
+                document.getElementById('barra-duelo-rival').style.width = rivalPct + '%';
+            }, 50);
+            
+            if(typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        }
+
         // UTILS
         function toggleSideMenu() {
             document.getElementById('side-menu').classList.toggle('open');
@@ -2222,6 +2401,324 @@
             if(typeof triggerHaptic === 'function') triggerHaptic('medium'); 
             requestPushPermission(); 
             document.getElementById('cartel-notificaciones').style.display = 'none'; 
+        }
+
+        // =====================================
+        // SISTEMA DE RACHA DIARIA Y LOGROS
+        // =====================================
+
+        // Saca la fecha actual en formato "YYYY-MM-DD"
+        function getFechaHoy() {
+            const date = new Date();
+            const offset = date.getTimezoneOffset() * 60000;
+            return (new Date(date - offset)).toISOString().split('T')[0];
+        }
+
+        function registrarAccesoDiario() {
+            if(!currentUser) return;
+            const hoy = getFechaHoy();
+            let misAccesos = currentUser.checkins || [];
+            
+            // Si ya has fichado hoy, no hace nada
+            if (misAccesos.includes(hoy)) return; 
+            
+            misAccesos.push(hoy);
+            db.ref('users').child(currentUser.id).update({ checkins: misAccesos }).then(() => {
+                if(typeof triggerHaptic === 'function') triggerHaptic('heavy');
+                renderRachaHome(); // Repintamos la Home
+                alert("¡Día registrado con éxito! La constancia tiene premio.");
+            });
+        }
+
+        // Calcula cuántos días SEGUIDOS llevas
+        function calcularRachaActual(accesos) {
+            if(!accesos || accesos.length === 0) return 0;
+            let sorted = [...new Set(accesos)].sort((a,b) => new Date(b) - new Date(a));
+            
+            let checkDate = new Date();
+            let hoyStr = getFormattedDate(checkDate);
+            let ayerStr = getFormattedDate(new Date(checkDate.setDate(checkDate.getDate() - 1)));
+            
+            // Si no fichaste ni hoy ni ayer, perdiste la racha
+            if (!sorted.includes(hoyStr) && !sorted.includes(ayerStr)) return 0;
+
+            let racha = 0;
+            let curr = new Date();
+            if(!sorted.includes(hoyStr)) curr.setDate(curr.getDate() - 1); // Empieza a contar desde ayer si hoy no has fichado
+
+            while(true) {
+                let str = getFormattedDate(curr);
+                if(sorted.includes(str)) {
+                    racha++;
+                    curr.setDate(curr.getDate() - 1); // Miramos el día anterior
+                } else {
+                    break; // Se rompió la cadena
+                }
+            }
+            return racha;
+        }
+
+        // Calcula tu RÉCORD histórico de días seguidos (para los logros)
+        function calcularMaxRacha(accesos) {
+            if(!accesos || accesos.length === 0) return 0;
+            let sorted = [...new Set(accesos)].sort((a,b) => new Date(a) - new Date(b));
+            let maxRacha = 1;
+            let currentRacha = 1;
+
+            for (let i = 1; i < sorted.length; i++) {
+                let prev = new Date(sorted[i-1]);
+                let curr = new Date(sorted[i]);
+                let diffDays = Math.ceil(Math.abs(curr - prev) / (1000 * 60 * 60 * 24)); 
+
+                if (diffDays === 1) {
+                    currentRacha++;
+                    if (currentRacha > maxRacha) maxRacha = currentRacha;
+                } else {
+                    currentRacha = 1;
+                }
+            }
+            return maxRacha;
+        }
+
+        function getFormattedDate(date) {
+            const offset = date.getTimezoneOffset() * 60000;
+            return (new Date(date - offset)).toISOString().split('T')[0];
+        }
+
+        // Dibuja la cuadrícula en la Home
+        // Dibuja el Calendario Real en la Home
+        function renderRachaHome() {
+            if(!currentUser) return;
+            const misAccesos = currentUser.checkins || [];
+            const rachaActual = calcularRachaActual(misAccesos);
+            const hoyStr = getFechaHoy();
+            const grid = document.getElementById('calendario-grid');
+            const btn = document.getElementById('btn-reclamar-dia');
+            const mesTxt = document.getElementById('mes-actual-txt');
+            
+            if(!grid || !btn) return;
+
+            document.getElementById('racha-counter').innerHTML = `${rachaActual} <i class="fas fa-fire-alt" style="font-size: 1rem;"></i>`;
+
+            // Control del botón
+            if (misAccesos.includes(hoyStr)) {
+                btn.style.background = 'rgba(255,255,255,0.1)';
+                btn.style.color = 'var(--text-muted)';
+                btn.style.boxShadow = 'none';
+                btn.innerHTML = '<i class="fas fa-check-double"></i> Fichado Hoy';
+                btn.disabled = true;
+            } else {
+                btn.style.background = 'linear-gradient(90deg, var(--success), #059669)';
+                btn.style.color = 'white';
+                btn.innerHTML = '<i class="fas fa-calendar-check"></i> Fichar Hoy';
+                btn.disabled = false;
+            }
+
+            // Construcción del Calendario Real Mensual
+            grid.innerHTML = "";
+            const fechaActual = new Date();
+            const año = fechaActual.getFullYear();
+            const mes = fechaActual.getMonth();
+            
+            const mesesNombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            mesTxt.innerText = `${mesesNombres[mes]} ${año}`;
+
+            const diasEnMes = new Date(año, mes + 1, 0).getDate();
+            let diaInicioSemana = new Date(año, mes, 1).getDay();
+            diaInicioSemana = diaInicioSemana === 0 ? 6 : diaInicioSemana - 1; // Ajuste para que Lunes sea la columna 0
+
+            const hoyDate = new Date();
+            const hoyDia = hoyDate.getDate();
+            const esMesActual = hoyDate.getMonth() === mes && hoyDate.getFullYear() === año;
+
+            // Rellenar huecos vacíos antes del día 1 del mes
+            for (let i = 0; i < diaInicioSemana; i++) {
+                grid.innerHTML += `<div></div>`;
+            }
+
+            // Pintar los días del mes con su lógica de colores
+            for (let d = 1; d <= diasEnMes; d++) {
+                const diaStr = `${año}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const haFichado = misAccesos.includes(diaStr);
+                const esHoy = esMesActual && d === hoyDia;
+                const esPasado = esMesActual && d < hoyDia;
+                
+                let bg = 'rgba(255,255,255,0.02)'; // Gris por defecto (futuro)
+                let color = 'rgba(255,255,255,0.3)';
+                let border = '1px solid transparent';
+                let icon = '';
+
+                if (haFichado) {
+                    bg = 'rgba(16, 185, 129, 0.2)'; // Fondo verde para aciertos
+                    color = 'var(--success)';
+                    border = '1px solid var(--success)';
+                } else if (esPasado) {
+                    bg = 'rgba(239, 68, 68, 0.1)'; // Fondo rojo para fallos
+                    color = 'var(--danger)';
+                    icon = '<div style="position:absolute; top:2px; right:3px; color:var(--danger); font-size:0.5rem;"><i class="fas fa-times"></i></div>';
+                }
+
+                if (esHoy && !haFichado) {
+                    border = '1px solid var(--rl-orange)'; // Resalta el día de hoy si falta fichar
+                    color = 'white';
+                    bg = 'rgba(255, 85, 0, 0.1)';
+                }
+
+                grid.innerHTML += `
+                    <div style="position:relative; aspect-ratio: 1; border-radius: 8px; background: ${bg}; border: ${border}; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: ${color}; transition: 0.2s;">
+                        ${d}
+                        ${icon}
+                    </div>
+                `;
+            }
+        }
+
+        // Dibuja las medallas en el perfil
+        // Dibuja las medallas en el perfil (Versión blindada antibugs)
+        function renderPerfilLogros(userProfile) {
+            const container = document.getElementById('profile-logros-container');
+            if(!container) return;
+            container.innerHTML = "";
+
+            const accesos = userProfile.checkins || [];
+            const maxRacha = calcularMaxRacha(accesos);
+
+            const numAmigos = userProfile.friends ? userProfile.friends.length : 0;
+            const logroAmigos = numAmigos >= 50;
+
+            // EL FIX: "p &&" y "g &&" comprueban que el coche o grupo existe antes de leerlo
+            const misCoches = presetsDB.filter(p => p && p.u === userProfile.epic);
+            let maxLikes = 0;
+            misCoches.forEach(c => {
+                const likes = c.likes ? c.likes.length : 0;
+                if(likes > maxLikes) maxLikes = likes;
+            });
+            const logroTendencias = maxLikes >= 20;
+
+            const misGrupos = groupsDB.filter(g => g && g.creator === userProfile.epic);
+            let maxMiembros = 0;
+            misGrupos.forEach(g => {
+                const miembros = g.members ? g.members.length : 0;
+                if(miembros > maxMiembros) maxMiembros = miembros;
+            });
+            const logroLider = maxMiembros >= 30;
+
+            const medallas = [
+                { id: '1m', unlocked: maxRacha >= 30, nombre: "Constancia", desc: "30 Días", requisito: "Entra a la app y ficha tu acceso diario durante 30 días seguidos.", icon: "fa-seedling", color: "#10b981" },
+                { id: '3m', unlocked: maxRacha >= 90, nombre: "Disciplina", desc: "90 Días", requisito: "Ficha a diario durante 3 meses sin fallar ni un solo día.", icon: "fa-fire", color: "#ff5500" },
+                { id: '9m', unlocked: maxRacha >= 270, nombre: "Dedicación", desc: "9 Meses", requisito: "Mantén una racha de acceso diario durante 9 meses.", icon: "fa-gem", color: "#0077ff" },
+                { id: '12m', unlocked: maxRacha >= 365, nombre: "Leyenda", desc: "1 Año", requisito: "1 año entero de racha diaria. Solo apto para leyendas absolutas.", icon: "fa-crown", color: "#fbbf24" },
+                
+                { id: 'soc_50', unlocked: logroAmigos, nombre: "RR. Públicas", desc: "50 Amigos", requisito: "Agrega y ten aceptados a 50 amigos en tu lista de contactos.", icon: "fa-users", color: "#ec4899" },
+                { id: 'gar_20', unlocked: logroTendencias, nombre: "Tendencias", desc: "20 Fuegos", requisito: "Consigue que un mismo diseño tuyo en el Garaje reciba 20 Fuegos.", icon: "fa-palette", color: "#a855f7" },
+                { id: 'grp_30', unlocked: logroLider, nombre: "Líder", desc: "Grupo de 30", requisito: "Crea un grupo en la sección Social y consigue que se unan más de 30 miembros.", icon: "fa-bullhorn", color: "#ef4444" }
+            ];
+
+            container.style.gridTemplateColumns = "repeat(auto-fit, minmax(85px, 1fr))";
+
+            medallas.forEach(m => {
+                const filter = m.unlocked ? "" : "filter: grayscale(1) opacity(0.3);";
+                const bg = m.unlocked ? `rgba(${hexToRgb(m.color)}, 0.1)` : "rgba(255,255,255,0.05)";
+                const border = m.unlocked ? `border: 1px solid ${m.color};` : "border: 1px solid transparent;";
+
+                const reqEscapado = m.requisito.replace(/'/g, "\\'");
+
+                container.innerHTML += `
+                    <div style="background: ${bg}; ${border} border-radius: 12px; padding: 15px 5px; text-align: center; ${filter} transition: 0.3s; cursor: pointer;" 
+                         onclick="mostrarInfoLogro('${m.nombre}', '${reqEscapado}', ${m.unlocked}, '${m.color}', '${m.icon}')">
+                        <i class="fas ${m.icon}" style="font-size: 1.8rem; color: ${m.color}; margin-bottom: 8px; text-shadow: 0 0 15px ${m.color}80;"></i>
+                        <h4 style="font-size: 0.65rem; color: white; text-transform: uppercase; font-weight: 800; margin-bottom: 2px;">${m.nombre}</h4>
+                        <p style="font-size: 0.55rem; color: var(--text-muted); font-weight: 700;">${m.desc}</p>
+                    </div>
+                `;
+            });
+        }
+
+        let timeoutLogro;
+        // Muestra una notificación flotante muy elegante al tocar una medalla
+        function mostrarInfoLogro(nombre, requisito, unlocked, color, icon) {
+            if(typeof triggerHaptic === 'function') triggerHaptic('light');
+
+            let toast = document.getElementById('toast-info-logro');
+            
+            // Si el cartel no existe en el HTML, lo creamos al vuelo
+            if(!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast-info-logro';
+                toast.style.cssText = "position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: rgba(10,15,28,0.98); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding: 20px; border-radius: 16px; z-index: 9999; box-shadow: 0 15px 40px rgba(0,0,0,0.8); width: 85%; max-width: 320px; text-align: center; animation: slideUp 0.3s ease; opacity: 1; transition: opacity 0.3s; display: none;";
+                document.body.appendChild(toast);
+            }
+
+            const estadoBadge = unlocked
+                ? `<div style="background: rgba(16, 185, 129, 0.2); color: var(--success); padding: 6px 12px; border-radius: 8px; display: inline-block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-top: 5px; border: 1px solid var(--success);"><i class="fas fa-check-circle"></i> Desbloqueado</div>`
+                : `<div style="background: rgba(239, 68, 68, 0.2); color: var(--danger); padding: 6px 12px; border-radius: 8px; display: inline-block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-top: 5px; border: 1px solid var(--danger);"><i class="fas fa-lock"></i> Bloqueado</div>`;
+
+            toast.innerHTML = `
+                <i class="fas ${icon}" style="font-size: 2rem; color: ${color}; margin-bottom: 12px; text-shadow: 0 0 20px ${color}80;"></i>
+                <h4 style="font-size: 1.1rem; color: white; margin-bottom: 5px; text-transform: uppercase; font-weight: 900;">${nombre}</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; line-height: 1.5; margin-bottom: 15px;">${requisito}</p>
+                ${estadoBadge}
+            `;
+
+            toast.style.display = 'block';
+            toast.style.opacity = '1';
+
+            // Escondemos el cartel a los 4 segundos
+            clearTimeout(timeoutLogro);
+            timeoutLogro = setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => { toast.style.display = 'none'; }, 300);
+            }, 4000);
+        }
+
+        // Utilidad rápida para los colores de las medallas
+        function hexToRgb(hex) {
+            let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : "255,255,255";
+        }
+
+        // Dibuja la colección de marcos en el perfil
+        function renderPerfilMarcos(userProfile) {
+            const container = document.getElementById('profile-marcos-container');
+            if(!container) return;
+            container.innerHTML = "";
+
+            const accesos = userProfile.checkins || [];
+            const maxRacha = calcularMaxRacha(accesos);
+
+            // Definimos los marcos y los días que exigen
+            const marcos = [
+                { id: 'm1', req: 30, nombre: "1 Mes", clase: "marco-esmeralda", color: "var(--success)", icon: "1" },
+                { id: 'm3', req: 90, nombre: "3 Meses", clase: "marco-fuego", color: "var(--rl-orange)", icon: "3" },
+                { id: 'm9', req: 270, nombre: "9 Meses", clase: "marco-electrico", color: "var(--rl-blue)", icon: "9" },
+                { id: 'm12', req: 365, nombre: "1 Año", clase: "marco-leyenda", color: "#fbbf24", icon: '<i class="fas fa-crown"></i>' }
+            ];
+
+            marcos.forEach(m => {
+                const unlocked = maxRacha >= m.req;
+                
+                // Si está bloqueado: gris, sin animación, con candado y borde punteado
+                const claseAnimacion = unlocked ? m.clase : "";
+                const colorTexto = unlocked ? m.color : "var(--text-muted)";
+                const opacidad = unlocked ? "1" : "0.4";
+                const candado = unlocked ? "" : `<div style="position:absolute; top:-5px; right:-5px; background:var(--danger); border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:0.6rem; color:white; border:2px solid #0a0f1c; z-index:10;"><i class="fas fa-lock"></i></div>`;
+                const fondoMarco = unlocked ? "#0a0f1c" : "rgba(255,255,255,0.05)";
+                const bordeMarco = unlocked ? "" : "border: 2px dashed var(--glass-border);";
+
+                // Reutilizamos el Toast elegante para explicar cómo se consigue
+                const reqEscapado = `Ficha tu acceso diario durante ${m.req} días seguidos para desbloquear este marco animado para tu avatar.`;
+
+                container.innerHTML += `
+                    <div style="text-align: center; position: relative; opacity: ${opacidad}; transition: 0.3s; cursor: pointer; width: 60px;"
+                         onclick="mostrarInfoLogro('Marco ${m.nombre}', '${reqEscapado}', ${unlocked}, '${m.color}', 'fa-camera-retro')">
+                        ${candado}
+                        <div class="msg-avatar ${claseAnimacion}" style="width: 50px; height: 50px; font-size: 1.2rem; margin: 0 auto 8px; background: ${fondoMarco}; ${bordeMarco} display: flex; align-items: center; justify-content: center; overflow: visible;">
+                            ${m.icon}
+                        </div>
+                        <p style="font-size: 0.6rem; font-weight: 800; color: ${colorTexto}; text-transform: uppercase;">${m.nombre}</p>
+                    </div>
+                `;
+            });
         }
     </script>
 </body>
